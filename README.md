@@ -1,2 +1,2 @@
-# foraya
-ucapan untuk aya
+# gatau
+di bilang gatau juga 
