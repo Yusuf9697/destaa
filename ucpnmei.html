@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>meii — 30 mei</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Playfair+Display:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:       #1a1018;
+  --rose:      #b5466b;
+  --blush:     #e8c4d0;
+  --cream:     #faf6f1;
+  --warm:      #f0e8dc;
+  --muted:     #8a6a76;
+  --line:      #d4afc0;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  min-height: 100vh;
+  background: var(--cream);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── grain overlay ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ── shared layout ── */
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  position: relative;
+}
+
+.hidden { display: none !important; }
+
+/* ============================
+   SCREEN 1 — LANDING
+   ============================ */
+#s-landing {
+  background: var(--cream);
+}
+
+.landing-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+  max-width: 540px;
+}
+
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.3s ease forwards;
+}
+
+.landing-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(4rem, 14vw, 7.5rem);
+  font-weight: 400;
+  line-height: 0.92;
+  color: var(--ink);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 0.9s 0.55s ease forwards;
+  letter-spacing: -0.02em;
+}
+
+.landing-title span {
+  color: var(--rose);
+}
+
+.landing-sub {
+  font-size: 1.15rem;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  font-style: italic;
+  margin-bottom: 56px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.8s ease forwards;
+}
+
+.divider {
+  width: 48px;
+  height: 1px;
+  background: var(--line);
+  margin: 0 auto 56px;
+  opacity: 0;
+  animation: fadeUp 0.6s 1s ease forwards;
+}
+
+.btn-play {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: var(--ink);
+  border: none;
+  padding: 16px 40px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.25s;
+  opacity: 0;
+  animation: fadeUp 0.7s 1.2s ease forwards;
+}
+
+.btn-play::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--ink);
+  transform: translate(4px, 4px);
+  transition: transform 0.2s;
+}
+
+.btn-play:hover {
+  background: var(--rose);
+}
+.btn-play:hover::after {
+  transform: translate(6px, 6px);
+}
+.btn-play:active::after {
+  transform: translate(2px, 2px);
+}
+
+/* ============================
+   SCREEN 2 — COUNTDOWN
+   ============================ */
+#s-countdown {
+  background: var(--ink);
+  display: none;
+}
+
+.cd-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+  width: min(700px, 96vw);
+}
+
+.cd-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--blush);
+  opacity: 0.6;
+  margin-bottom: 32px;
+}
+
+.cd-number {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(7rem, 28vw, 16rem);
+  line-height: 0.88;
+  color: var(--cream);
+  letter-spacing: -0.04em;
+  display: block;
+  margin-bottom: 20px;
+  will-change: transform;
+}
+
+.cd-date {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--blush);
+  letter-spacing: 0.06em;
+  margin-bottom: 48px;
+}
+
+.cd-track {
+  width: min(320px, 80vw);
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.cd-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--rose);
+  transition: width 0.1s linear;
+}
+
+.cd-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+}
+
+/* ============================
+   SCREEN 3 — BIRTHDAY
+   ============================ */
+#s-bday {
+  background: var(--cream);
+  display: none;
+}
+
+.bday-wrap {
+  width: min(680px, 96vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.bday-kicker {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 18px;
+  opacity: 0;
+}
+
+.bday-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(2.8rem, 9vw, 5.5rem);
+  color: var(--ink);
+  line-height: 1;
+  text-align: center;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+  opacity: 0;
+}
+
+.bday-title em {
+  color: var(--rose);
+  font-style: italic;
+}
+
+.bday-year {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  margin-bottom: 52px;
+  opacity: 0;
+}
+
+/* ── message card ── */
+.msg-card {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--warm);
+  padding: 48px 52px;
+  position: relative;
+  margin-bottom: 40px;
+  opacity: 0;
+}
+
+.msg-card::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--blush);
+  pointer-events: none;
+}
+
+.msg-card::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--line);
+  z-index: -1;
+  background: transparent;
+}
+
+.msg-text {
+  font-size: clamp(1.05rem, 2.5vw, 1.22rem);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 2;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  min-height: 8em;
+  position: relative;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--rose);
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: blink 0.9s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.msg-from {
+  margin-top: 32px;
+  text-align: right;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.msg-from::before {
+  content: '— ';
+}
+
+/* ── whatsapp link ── */
+.wa-link {
+  display: inline-block;
+  margin: 28px 0 32px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: lowercase;
+  color: var(--cream);
+  background: var(--rose);
+  text-decoration: none;
+  padding: 14px 36px;
+  position: relative;
+  transition: background 0.25s;
+  opacity: 0;
+}
+
+.wa-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--rose);
+  transform: translate(3px, 3px);
+  transition: transform 0.2s;
+}
+
+.wa-link:hover {
+  background: var(--ink);
+}
+
+.wa-link:hover::after {
+  transform: translate(5px, 5px);
+}
+
+.wa-link:active::after {
+  transform: translate(1px, 1px);
+}
+
+/* ── age row ── */
+.age-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  opacity: 0;
+}
+
+.age-line {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.age-badge {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.age-badge strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: normal;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--rose);
+  vertical-align: middle;
+  margin: 0 6px;
+}
+
+/* ── music bar ── */
+.music-row {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+}
+
+.bar-vis {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 20px;
+}
+
+.bar-vis span {
+  display: block;
+  width: 3px;
+  background: var(--rose);
+  border-radius: 2px;
+  animation: barDance var(--spd, 0.6s) ease-in-out infinite alternate;
+  height: var(--h, 10px);
+}
+.bar-vis span:nth-child(1) { --h:8px;  --spd:0.55s; }
+.bar-vis span:nth-child(2) { --h:16px; --spd:0.7s;  animation-delay:0.1s; }
+.bar-vis span:nth-child(3) { --h:12px; --spd:0.45s; animation-delay:0.2s; }
+.bar-vis span:nth-child(4) { --h:18px; --spd:0.6s;  animation-delay:0.05s;}
+.bar-vis span:nth-child(5) { --h:9px;  --spd:0.5s;  animation-delay:0.15s;}
+
+@keyframes barDance {
+  from { transform: scaleY(0.3); }
+  to   { transform: scaleY(1); }
+}
+
+.music-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ============================
+   SHARED ANIMATIONS
+   ============================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-in {
+  animation: fadeUp 0.7s ease forwards;
+}
+
+/* confetti */
+.konfeti {
+  position: fixed;
+  top: -16px;
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 500;
+  animation: konfetiFall linear both;
+}
+
+@keyframes konfetiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0.9; }
+  100% { transform: translateY(105vh) rotate(600deg); opacity: 0; }
+}
+
+@media (max-width: 520px) {
+  .msg-card { padding: 32px 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== SCREEN 1 ====== -->
+<div id="s-landing" class="screen">
+  <div class="landing-inner">
+    <div class="eyebrow">untuk kamu meii</div>
+    <div class="landing-title">hai,<br><span>meii</span></div>
+    <div class="landing-sub">ada sesuatu untukmu di sini</div>
+    <div class="divider"></div>
+    <button class="btn-play" onclick="mulaiHitung()">putar</button>
+  </div>
+</div>
+
+<!-- ====== SCREEN 2 ====== -->
+<div id="s-countdown" class="screen">
+  <div class="cd-wrap">
+    <div class="cd-tag">memutar waktu</div>
+    <span class="cd-number" id="tahunEl">2026</span>
+    <div class="cd-date" id="tglEl">30 Mei 2026</div>
+    <div class="cd-track">
+      <div class="cd-fill" id="barEl" style="width:100%"></div>
+    </div>
+    <div class="cd-pct" id="pctEl">100%</div>
+  </div>
+</div>
+
+<!-- ====== SCREEN 3 ====== -->
+<div id="s-bday" class="screen">
+  <div class="bday-wrap">
+
+    <div class="bday-kicker" id="bk">happy birthday</div>
+
+    <div class="bday-title" id="bt">
+      <em>meii</em>
+    </div>
+
+    <div class="bday-year" id="by">
+      30 &middot; 05 &middot; 2010
+    </div>
+
+    <div class="msg-card" id="mc">
+      <div class="msg-text" id="msgText"><span class="cursor"></span></div>
+      <div class="msg-from" id="msgFrom" style="opacity:0">idk__</div>
+    </div>
+
+    <a href="" target="_blank" class="wa-link" id="wl">
+         
+    </a>
+
+    <div class="age-row" id="ar">
+      <div class="age-line"></div>
+      <div class="age-badge">
+        memasuki tahun ke <strong id="usiaEl">16</strong>
+      </div>
+      <div class="age-line"></div>
+    </div>
+
+    <div class="music-row" id="mr">
+      <div class="bar-vis">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="music-label">happy birthday sedang dimainkan</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   UBAH PESAN UCAPAN DI SINI (ganti teks di bawah)
+   ═══════════════════════════════════════════════════ */
+const pesanLengkap = `haii meii selamat ulang tahun yg ke 16 yaa semoga impian kamu tercapai dan semoga keberkahan selalu datang ke kamu maaf kalo aku ada salah yaa mei dan maaf juga kalo aku kaya ngelarang kamu apa apa aku buat ini awalnya karna aku ngerasa kita se deket iitu dan nyatanya kita asing haha jujurr aku seneng ketemu kamu walaupun cuma sebentar dan ini juga kesalahan aku sendiri maap yaa meii oh iya makasih yaa untuk semuanya maap kalo ada kata kata yg kurang enak aku pamit yaa byeee`;
+
+/* ═══════════════════════════════════════════════════ */
+
+/* ── usia ── */
+document.getElementById('usiaEl').textContent = 2026 - 2010;
+
+/* ── happy birthday (web audio) ── */
+function mainkanHappyBirthday() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const nada = [
+    [261.63,0.22],[261.63,0.22],[293.66,0.44],[261.63,0.44],[349.23,0.44],[329.63,0.88],
+    [261.63,0.22],[261.63,0.22],[293.66,0.44],[261.63,0.44],[392.00,0.44],[349.23,0.88],
+    [261.63,0.22],[261.63,0.22],[523.25,0.44],[440.00,0.44],[349.23,0.44],[329.63,0.44],[293.66,0.88],
+    [466.16,0.22],[466.16,0.22],[440.00,0.44],[349.23,0.44],[392.00,0.44],[349.23,1.2]
+  ];
+  let t = ctx.currentTime + 0.05;
+  nada.forEach(([freq, dur]) => {
+    ['triangle','sine'].forEach((tipe, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = tipe;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime([0.45, 0.3][i], t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur - 0.04);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + dur);
+    });
+    t += dur + 0.025;
+  });
+  setTimeout(mainkanHappyBirthday, 29000);
+}
+
+/* ── confetti (minimal, refined) ── */
+function tembakKonfeti() {
+  const warna = ['#b5466b','#d4afc0','#e8c4d0','#1a1018','#c9a090','#8a6a76'];
+  for (let i = 0; i < 90; i++) {
+    setTimeout(() => {
+      const k = document.createElement('div');
+      k.className = 'konfeti';
+      k.style.cssText = `
+        left: ${Math.random()*100}vw;
+        background: ${warna[Math.floor(Math.random()*warna.length)]};
+        width: ${4 + Math.random()*5}px;
+        height: ${8 + Math.random()*10}px;
+        animation-duration: ${3 + Math.random()*3}s;
+      `;
+      document.body.appendChild(k);
+      setTimeout(() => k.remove(), 7000);
+    }, i * 40);
+  }
+}
+
+/* ── animasi typing ── */
+function animasiKetik(elId, teks, kecepatan, cb) {
+  const el = document.getElementById(elId);
+  const cursor = el.querySelector('.cursor');
+  let i = 0;
+  function ketik() {
+    if (i < teks.length) {
+      const ch = teks[i];
+      if (ch === '\n') {
+        const br = document.createElement('br');
+        el.insertBefore(br, cursor);
+        if (teks[i+1] === '\n') {
+          const br2 = document.createElement('br');
+          el.insertBefore(br2, cursor);
+          i++;
+        }
+      } else {
+        el.insertBefore(document.createTextNode(ch), cursor);
+      }
+      i++;
+      const delay = ch === ',' || ch === '.' ? kecepatan * 5 : kecepatan;
+      setTimeout(ketik, delay);
+    } else {
+      if (cb) cb();
+    }
+  }
+  ketik();
+}
+
+/* ── countdown ── */
+function mulaiHitung() {
+  document.getElementById('s-landing').classList.add('hidden');
+  const sCD = document.getElementById('s-countdown');
+  sCD.style.display = 'flex';
+
+  const tahunEl = document.getElementById('tahunEl');
+  const tglEl   = document.getElementById('tglEl');
+  const barEl   = document.getElementById('barEl');
+  const pctEl   = document.getElementById('pctEl');
+
+  const MULAI = 2026, AKHIR = 2010;
+  const DURASI = 5500;
+  const t0 = performance.now();
+
+  function update(now) {
+    const raw = Math.min((now - t0) / DURASI, 1);
+    // easing: ease-in-out cubic
+    const eased = raw < 0.5
+      ? 4 * raw * raw * raw
+      : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+
+    const tahun = Math.round(MULAI - eased * (MULAI - AKHIR));
+    tahunEl.textContent = tahun;
+    tglEl.textContent = '30 Mei ' + tahun;
+
+    const pct = Math.round((1 - eased) * 100);
+    barEl.style.width = pct + '%';
+    pctEl.textContent = pct + '%';
+
+    // subtle vertical drift
+    const drift = Math.sin(now / 80) * 4;
+    tahunEl.style.transform = `translateY(${drift}px)`;
+
+    if (raw < 1) {
+      requestAnimationFrame(update);
+    } else {
+      tahunEl.style.transform = '';
+      tahunEl.textContent = 2010;
+      tglEl.textContent = '30 Mei 2010';
+      barEl.style.width = '0%';
+      pctEl.textContent = '0%';
+      setTimeout(tampilUltah, 600);
+    }
+  }
+  requestAnimationFrame(update);
+}
+
+/* ── tampil birthday ── */
+function tampilUltah() {
+  document.getElementById('s-countdown').style.display = 'none';
+  const sB = document.getElementById('s-bday');
+  sB.style.display = 'flex';
+
+  const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+  async function animateIn() {
+    await delay(100);
+    const bk = document.getElementById('bk');
+    bk.style.animation = 'fadeUp 0.7s ease forwards';
+
+    await delay(250);
+    const bt = document.getElementById('bt');
+    bt.style.animation = 'fadeUp 0.8s ease forwards';
+
+    await delay(200);
+    const by = document.getElementById('by');
+    by.style.animation = 'fadeUp 0.6s ease forwards';
+
+    await delay(400);
+    const mc = document.getElementById('mc');
+    mc.style.animation = 'fadeUp 0.7s ease forwards';
+
+    await delay(600);
+    mainkanHappyBirthday();
+    tembakKonfeti();
+
+    // typing
+    await delay(200);
+    animasiKetik('msgText', pesanLengkap, 28, async () => {
+      await delay(400);
+      const from = document.getElementById('msgFrom');
+      from.style.transition = 'opacity 0.8s';
+      from.style.opacity = '1';
+
+      await delay(300);
+      const wl = document.getElementById('wl');
+      wl.style.animation = 'fadeUp 0.6s ease forwards';
+
+      await delay(300);
+      const ar = document.getElementById('ar');
+      ar.style.animation = 'fadeUp 0.6s ease forwards';
+
+      await delay(300);
+      const mr = document.getElementById('mr');
+      mr.style.animation = 'fadeUp 0.6s ease forwards';
+    });
+  }
+
+  animateIn();
+}
+</script>
+</body>
+</html>
+by
