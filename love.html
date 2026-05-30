@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Love You - Heart Text Animation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Arial', 'Segoe UI', 'Poppins', sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        .info {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            pointer-events: none;
+            font-family: monospace;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="heartCanvas"></canvas>
+    <div class="info">❤️ "love you" membentuk hati | bergerak & berkilau ❤️</div>
+    <script>
+        (function() {
+            const canvas = document.getElementById('heartCanvas');
+            let ctx = canvas.getContext('2d');
+            
+            // Ukuran canvas full window
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                draw();
+            });
+            resizeCanvas();
+            
+            // Parameter kurva hati (sama seperti sebelumnya)
+            // Fungsi getHeartPosition(t) dengan t dalam radian
+            function getHeartPosition(t) {
+                // Skala disesuaikan agar pas di canvas
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                return { x: x, y: y };
+            }
+            
+            // Fungsi untuk mendapatkan orientasi (sudut) di suatu titik pada kurva
+            // Dengan pendekatan turunan numerik
+            function getHeartAngle(t) {
+                const delta = 0.01;
+                const p1 = getHeartPosition(t);
+                const p2 = getHeartPosition(t + delta);
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                return Math.atan2(dy, dx);
+            }
+            
+            // Parameter animasi
+            let time = 0;
+            let lastTimestamp = 0;
+            
+            // Jumlah teks "love you" di sekeliling hati
+            const TEXT_COUNT = 45;
+            // Rentang parameter t (0 s/d 2*PI) untuk satu putaran penuh hati
+            const T_START = 0;
+            const T_END = 2 * Math.PI;
+            
+            // Warna-warna ceria
+            const colorPalette = [
+                '#ff3366', '#ff6699', '#ff99cc', '#ff3366',
+                '#ff0066', '#ff3399', '#ff66cc', '#ff99ff',
+                '#ff3366', '#ff6699'
+            ];
+            
+            // Efek glow: bayangan teks
+            function drawTextWithGlow(ctx, text, x, y, angle, color, scale, timeOffset) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                // Efek berdenyut kecil
+                const pulse = 0.85 + Math.sin(time * 5 + timeOffset) * 0.15;
+                const finalScale = scale * pulse;
+                ctx.font = `bold ${Math.floor(24 * finalScale)}px "Segoe UI", "Poppins", "Arial"`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                // Glow (shadow)
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15 * finalScale;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Teks utama
+                ctx.fillStyle = color;
+                ctx.fillText(text, 0, 0);
+                
+                // Tambahkan inner glow dengan teks lebih kecil?
+                ctx.shadowBlur = 8 * finalScale;
+                ctx.fillStyle = 'white';
+                ctx.fillText(text, 0, 0);
+                
+                ctx.restore();
+            }
+            
+            // Variabel untuk efek pergerakan berjalan di sepanjang kurva
+            let offset = 0; // offset animasi agar teks bergerak
+            
+            // Fungsi menggambar utama
+            function draw() {
+                if (!ctx) return;
+                // Bersihkan canvas dengan hitam gradien
+                const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grad.addColorStop(0, '#050510');
+                grad.addColorStop(1, '#000000');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Hitung skala agar hati pas di tengah (lebar hati sekitar 32, tinggi sekitar 20)
+                // Lebar hati dari x min -16 s/d 16 => 32, tinggi dari y min sekitar -17 s/d +2 => 19
+                // Kita ingin hati memenuhi 70% dari ukuran canvas
+                const scaleX = (canvas.width * 0.6) / 32;
+                const scaleY = (canvas.height * 0.6) / 20;
+                const scale = Math.min(scaleX, scaleY);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2 + 10; // sedikit turun agar proporsional
+                
+                // Animasi offset berjalan (teks bergerak di sepanjang kurva)
+                offset = (performance.now() / 1000) * 0.6; // kecepatan gerak
+                
+                // Loop untuk menggambar teks di berbagai titik t
+                for (let i = 0; i < TEXT_COUNT; i++) {
+                    // t dari 0 sampai 2*PI
+                    let t = T_START + (i / TEXT_COUNT) * (T_END - T_START);
+                    // tambahkan offset animasi sehingga teks "berjalan" mengelilingi hati
+                    let animatedT = t + offset;
+                    // wrap ke dalam [0, 2PI]
+                    animatedT = animatedT % (2 * Math.PI);
+                    
+                    // Dapatkan posisi di kurva
+                    let pos = getHeartPosition(animatedT);
+                    // Ubah ke koordinat canvas
+                    const x = centerX + pos.x * scale;
+                    const y = centerY + pos.y * scale;
+                    
+                    // Dapatkan sudut agar teks mengikuti arah kurva
+                    let angle = getHeartAngle(animatedT);
+                    // Sedikit rotasi tambahan biar lebih manis (opsional)
+                    angle += Math.sin(animatedT * 3) * 0.2;
+                    
+                    // Pilih warna berdasarkan posisi t
+                    const colorIdx = Math.floor(animatedT / (2 * Math.PI) * colorPalette.length) % colorPalette.length;
+                    let color = colorPalette[colorIdx];
+                    
+                    // Ukuran teks mengecil di bagian ujung? biar seragam, tapi variasi sedikit
+                    let textScale = 0.8 + Math.sin(animatedT * 5) * 0.2;
+                    textScale = Math.min(1.1, Math.max(0.7, textScale));
+                    
+                    // Teks utama: "love you" bisa diulang, atau terkadang tambahan heart
+                    let text = "love you";
+                    // Tambahkan variasi: kadang "❤️" di samping? biar manis
+                    if (Math.floor(animatedT * 8) % 5 === 0) {
+                        text = "❤️ love you";
+                    } else if (Math.floor(animatedT * 6) % 7 === 0) {
+                        text = "love you ❤️";
+                    }
+                    
+                    // Efek berdenyut berdasarkan waktu global
+                    const timeOffset = i * 0.3;
+                    drawTextWithGlow(ctx, text, x, y, angle, color, textScale, timeOffset);
+                }
+                
+                // Tambahkan teks besar "LOVE" di tengah sebagai ornamen
+                ctx.save();
+                ctx.shadowBlur = 0;
+                ctx.font = `bold ${Math.floor(canvas.width * 0.08)}px "Segoe UI", "Poppins"`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.shadowColor = "#ff3366";
+                ctx.shadowBlur = 20;
+                ctx.fillStyle = "rgba(255, 80, 120, 0.7)";
+                ctx.fillText("❤️", centerX, centerY - 8);
+                ctx.font = `bold ${Math.floor(canvas.width * 0.045)}px "Segoe UI", "Poppins"`;
+                ctx.fillStyle = "#ff99cc";
+                ctx.shadowBlur = 12;
+                ctx.fillText("love you", centerX, centerY + 28);
+                ctx.restore();
+                
+                // Tambahkan partikel kecil berkilau di sekitar hati
+                for (let p = 0; p < 80; p++) {
+                    const tGlow = (performance.now() / 1000 + p) % (Math.PI * 2);
+                    const posGlow = getHeartPosition(tGlow);
+                    const xGlow = centerX + posGlow.x * scale * (0.9 + Math.sin(tGlow * 10) * 0.05);
+                    const yGlow = centerY + posGlow.y * scale * (0.9 + Math.cos(tGlow * 7) * 0.05);
+                    const size = 2 + Math.sin(tGlow * 20 + performance.now() / 200) * 1.5;
+                    ctx.beginPath();
+                    ctx.arc(xGlow, yGlow, size, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${tGlow * 180}, 80%, 65%, 0.6)`;
+                    ctx.fill();
+                }
+                
+                requestAnimationFrame(draw);
+            }
+            
+            // Mulai animasi
+            draw();
+            
+            // Responsif terhadap resize (canvas sudah diresize, draw akan dipanggil terus)
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                // tidak perlu restart draw karena draw terus berjalan
+            });
+        })();
+    </script>
+</body>
+</html>
