@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Love You - Heart Typing Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.8s ease;
+        }
+
+        .loading-container {
+            width: 280px;
+            text-align: center;
+        }
+
+        .loading-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #330000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .loading-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: #ff1111;
+            border-radius: 10px;
+            transition: width 0.05s linear;
+            box-shadow: 0 0 8px #ff4444;
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            color: #ff3333;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="loveCanvas"></canvas>
+    
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-container">
+            <div class="loading-bar-bg">
+                <div id="loadingFill" class="loading-bar-fill"></div>
+            </div>
+            <div id="loadingText" class="loading-text">❤loading love ️</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('loveCanvas');
+            let ctx = canvas.getContext('2d');
+            
+            // ========== FUNGSI KURVA HATI SEMPURNA ==========
+            // t dari 0 sampai 2*PI
+            function getHeartPos(t) {
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                return { x, y };
+            }
+            
+            // Hitung sudut orientasi teks mengikuti arah kurva
+            function getAngle(t) {
+                const delta = 0.008;
+                const p1 = getHeartPos(t);
+                const p2 = getHeartPos(t + delta);
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                return Math.atan2(dy, dx);
+            }
+            
+            // ========== PARAMETER ==========
+            const TEXT_COUNT = 72;        // jumlah teks "love you" membentuk love rapat
+            const T_START = 0;
+            const T_END = 2 * Math.PI;
+            const RED_COLOR = "#ff1111";
+            
+            // Simpan posisi dan sudut setiap teks (tetap)
+            let textPositions = [];
+            
+            // Inisialisasi posisi teks di sepanjang kurva (statis)
+            function initTextPositions() {
+                textPositions = [];
+                for (let i = 0; i < TEXT_COUNT; i++) {
+                    let t = T_START + (i / TEXT_COUNT) * (T_END - T_START);
+                    let pos = getHeartPos(t);
+                    let angle = getAngle(t);
+                    textPositions.push({
+                        t: t,
+                        x: pos.x,
+                        y: pos.y,
+                        angle: angle
+                    });
+                }
+            }
+            
+            // Ukuran font dinamis
+            function getFontSize() {
+                const base = Math.min(canvas.width, canvas.height) / 32;
+                return `${Math.max(16, Math.floor(base))}px "Courier New", monospace`;
+            }
+            
+            // Menggambar satu teks "love you"
+            function drawLoveText(ctx, x, y, angle, fontSize, alpha = 1.0) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                ctx.font = `bold ${fontSize} "Courier New", monospace`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                // Glow merah
+                ctx.shadowColor = "#ff2222";
+                ctx.shadowBlur = 12;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                ctx.fillStyle = RED_COLOR;
+                ctx.globalAlpha = alpha;
+                ctx.fillText("love you", 0, 0);
+                
+                // Inner highlight
+                ctx.shadowBlur = 5;
+                ctx.fillStyle = "#ff6666";
+                ctx.fillText("love you", 0, 0);
+                
+                ctx.restore();
+            }
+            
+            // Variabel animasi typing
+            let currentTextIndex = 0;      // teks ke berapa yang sudah muncul
+            let typingInterval = null;
+            let animationFrameId = null;
+            let scale = 1, centerX = 0, centerY = 0;
+            
+            // Fungsi menggambar semua teks yang sudah muncul
+            function drawVisibleTexts() {
+                if (!ctx) return;
+                
+                // Bersihkan canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Hitung ulang scale dan center (setiap frame untuk responsif)
+                const scaleX = (canvas.width * 0.72) / 32;
+                const scaleY = (canvas.height * 0.68) / 20;
+                const currentScale = Math.min(scaleX, scaleY);
+                const currentCenterX = canvas.width / 2;
+                const currentCenterY = canvas.height / 2 + 6;
+                
+                const fontSize = getFontSize();
+                
+                // Gambar teks dari index 0 hingga currentTextIndex-1
+                for (let i = 0; i < currentTextIndex && i < textPositions.length; i++) {
+                    const pos = textPositions[i];
+                    const x = currentCenterX + pos.x * currentScale;
+                    const y = currentCenterY + pos.y * currentScale;
+                    // Efek fade in saat baru muncul (opsional)
+                    let alpha = 1.0;
+                    if (i === currentTextIndex - 1) {
+                        // teks terakhir yang baru muncul bisa sedikit efek
+                        alpha = 1.0;
+                    }
+                    drawLoveText(ctx, x, y, pos.angle, fontSize, alpha);
+                }
+            }
+            
+            // Resize handler saat animasi berjalan
+            function handleResize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                if (currentTextIndex > 0) {
+                    drawVisibleTexts();
+                }
+            }
+            
+            // Memulai animasi mengetik satu per satu
+            function startTypingAnimation() {
+                currentTextIndex = 0;
+                
+                // Bersihkan interval jika ada
+                if (typingInterval) clearInterval(typingInterval);
+                
+                // Interval setiap 60ms muncul satu "love you" (kecepatan mengetik)
+                typingInterval = setInterval(() => {
+                    if (currentTextIndex < textPositions.length) {
+                        currentTextIndex++;
+                        drawVisibleTexts();
+                    } else {
+                        // Selesai semua teks
+                        clearInterval(typingInterval);
+                        typingInterval = null;
+                    }
+                }, 55); // 55ms per teks -> total sekitar 4 detik untuk 72 teks
+                
+                // Gambar frame pertama
+                drawVisibleTexts();
+            }
+            
+            // ========== LOADING BAR ==========
+            let loadingProgress = 0;
+            let loadingInterval = null;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingFill = document.getElementById('loadingFill');
+            const loadingTextElem = document.getElementById('loadingText');
+            
+            function startLoading() {
+                loadingProgress = 0;
+                loadingFill.style.width = '0%';
+                loadingTextElem.innerHTML = '❤ loading love ❤';
+                
+                loadingInterval = setInterval(() => {
+                    loadingProgress += 2; // tambah 2% setiap 30ms -> total 1.5 detik
+                    if (loadingProgress >= 100) {
+                        loadingProgress = 100;
+                        loadingFill.style.width = '100%';
+                        loadingTextElem.innerHTML = 'love ready ';
+                        clearInterval(loadingInterval);
+                        // Selesai loading, hilangkan overlay
+                        setTimeout(() => {
+                            loadingOverlay.classList.add('hidden');
+                            // Setelah overlay hilang, mulai animasi typing
+                            setTimeout(() => {
+                                startTypingAnimation();
+                            }, 100);
+                        }, 300);
+                    }
+                    loadingFill.style.width = loadingProgress + '%';
+                    // ubah teks sesuai progress
+                    if (loadingProgress < 30) loadingTextElem.innerHTML = '⚙ memuat love...';
+                    else if (loadingProgress < 70) loadingTextElem.innerHTML = ' menyusun hati...';
+                    else loadingTextElem.innerHTML = 'hampir selesai...';
+                }, 25);
+            }
+            
+            // ========== INISIALISASI ==========
+            function init() {
+                resizeCanvas();
+                initTextPositions();
+                startLoading();
+            }
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                if (currentTextIndex > 0) {
+                    drawVisibleTexts();
+                } else {
+                    // sebelum animasi, canvas hitam
+                    ctx.fillStyle = "#000000";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                if (currentTextIndex > 0) {
+                    drawVisibleTexts();
+                }
+            });
+            
+            // Mulai
+            init();
+        })();
+    </script>
+</body>
+</html>
